@@ -1,0 +1,789 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- =====================  1. USERS  ===================== -->
+    <changeSet id="1-create-users" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="users"/>
+            </not>
+        </preConditions>
+        <createTable tableName="users">
+            <column name="user_id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="full_name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email" type="VARCHAR(100)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="password_hash" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="phone" type="VARCHAR(20)"/>
+            <column name="role" type="VARCHAR(20)" defaultValue="customer"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+    </changeSet>
+
+    <!-- =====================  2. ADDRESSES  ===================== -->
+    <changeSet id="2-create-addresses" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="addresses"/>
+            </not>
+        </preConditions>
+        <createTable tableName="addresses">
+            <column name="address_id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="INT"/>
+            <column name="street" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="city" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="state" type="VARCHAR(100)"/>
+            <column name="postal_code" type="VARCHAR(20)"/>
+            <column name="country" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_default" type="BOOLEAN" defaultValueBoolean="false"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="addresses"
+                baseColumnNames="user_id"
+                referencedTableName="users"
+                referencedColumnNames="user_id"
+                constraintName="fk_addresses_users"
+                onDelete="CASCADE"/>
+    </changeSet>
+
+    <!-- =====================  3. CATEGORIES  ===================== -->
+    <changeSet id="3-create-categories" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="categories"/>
+            </not>
+        </preConditions>
+        <createTable tableName="categories">
+            <column name="category_id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="parent_id" type="INT"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="categories"
+                baseColumnNames="parent_id"
+                referencedTableName="categories"
+                referencedColumnNames="category_id"
+                constraintName="fk_categories_parent"
+                onDelete="SET NULL"/>
+    </changeSet>
+
+    <!-- =====================  4. PRODUCTS  ===================== -->
+    <changeSet id="4-create-products" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="products"/>
+            </not>
+        </preConditions>
+        <createTable tableName="products">
+            <column name="product_id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="category_id" type="INT"/>
+            <column name="name" type="VARCHAR(150)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="price" type="NUMERIC(10,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="stock" type="INT" defaultValueNumeric="0"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="products"
+                baseColumnNames="category_id"
+                referencedTableName="categories"
+                referencedColumnNames="category_id"
+                constraintName="fk_products_categories"
+                onDelete="SET NULL"/>
+    </changeSet>
+
+    <!-- =====================  5. PRODUCT IMAGES  ===================== -->
+    <changeSet id="5-create-product-images" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="product_images"/>
+            </not>
+        </preConditions>
+        <createTable tableName="product_images">
+            <column name="image_id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="product_id" type="INT"/>
+            <column name="image_url" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_main" type="BOOLEAN" defaultValueBoolean="false"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="product_images"
+                baseColumnNames="product_id"
+                referencedTableName="products"
+                referencedColumnNames="product_id"
+                constraintName="fk_product_images_products"
+                onDelete="CASCADE"/>
+    </changeSet>
+
+    <!-- =====================  6. CARTS  ===================== -->
+    <changeSet id="6-create-carts" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="carts"/>
+            </not>
+        </preConditions>
+        <createTable tableName="carts">
+            <column name="cart_id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="INT"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="carts"
+                baseColumnNames="user_id"
+                referencedTableName="users"
+                referencedColumnNames="user_id"
+                constraintName="fk_carts_users"
+                onDelete="CASCADE"/>
+    </changeSet>
+
+    <!-- =====================  7. CART ITEMS  ===================== -->
+    <changeSet id="7-create-cart-items" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="cart_items"/>
+            </not>
+        </preConditions>
+        <createTable tableName="cart_items">
+            <column name="cart_item_id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="cart_id" type="INT"/>
+            <column name="product_id" type="INT"/>
+            <column name="quantity" type="INT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="cart_items"
+                baseColumnNames="cart_id"
+                referencedTableName="carts"
+                referencedColumnNames="cart_id"
+                constraintName="fk_cart_items_carts"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="cart_items"
+                baseColumnNames="product_id"
+                referencedTableName="products"
+                referencedColumnNames="product_id"
+                constraintName="fk_cart_items_products"/>
+
+        <addUniqueConstraint tableName="cart_items" columnNames="cart_id, product_id"/>
+
+        <sql><![CDATA[ALTER TABLE cart_items ADD CONSTRAINT chk_cart_qty CHECK (quantity > 0)]]></sql>
+    </changeSet>
+
+    <!-- =====================  8. ORDERS  ===================== -->
+    <changeSet id="8-create-orders" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="orders"/>
+            </not>
+        </preConditions>
+        <createTable tableName="orders">
+            <column name="order_id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="INT"/>
+            <column name="address_id" type="INT"/>
+            <column name="total_amount" type="NUMERIC(12,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(50)" defaultValue="pending"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="orders"
+                baseColumnNames="user_id"
+                referencedTableName="users"
+                referencedColumnNames="user_id"
+                constraintName="fk_orders_users"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="orders"
+                baseColumnNames="address_id"
+                referencedTableName="addresses"
+                referencedColumnNames="address_id"
+                constraintName="fk_orders_addresses"/>
+    </changeSet>
+
+    <!-- =====================  9. ORDER ITEMS  ===================== -->
+    <changeSet id="9-create-order-items" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="order_items"/>
+            </not>
+        </preConditions>
+        <createTable tableName="order_items">
+            <column name="order_item_id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="order_id" type="INT"/>
+            <column name="product_id" type="INT"/>
+            <column name="quantity" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="price" type="NUMERIC(10,2)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="order_items"
+                baseColumnNames="order_id"
+                referencedTableName="orders"
+                referencedColumnNames="order_id"
+                constraintName="fk_order_items_orders"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="order_items"
+                baseColumnNames="product_id"
+                referencedTableName="products"
+                referencedColumnNames="product_id"
+                constraintName="fk_order_items_products"/>
+    </changeSet>
+
+    <!-- =====================  10. PAYMENTS  ===================== -->
+    <changeSet id="10-create-payments" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="payments"/>
+            </not>
+        </preConditions>
+        <createTable tableName="payments">
+            <column name="payment_id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="order_id" type="INT"/>
+            <column name="amount" type="NUMERIC(12,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="method" type="VARCHAR(50)"/>
+            <column name="status" type="VARCHAR(50)" defaultValue="pending"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="payments"
+                baseColumnNames="order_id"
+                referencedTableName="orders"
+                referencedColumnNames="order_id"
+                constraintName="fk_payments_orders"
+                onDelete="CASCADE"/>
+    </changeSet>
+
+    <!-- =====================  11. REVIEWS  ===================== -->
+    <changeSet id="11-create-reviews" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="reviews"/>
+            </not>
+        </preConditions>
+        <createTable tableName="reviews">
+            <column name="review_id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="product_id" type="INT"/>
+            <column name="user_id" type="INT"/>
+            <column name="rating" type="INT"/>
+            <column name="comment" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="reviews"
+                baseColumnNames="product_id"
+                referencedTableName="products"
+                referencedColumnNames="product_id"
+                constraintName="fk_reviews_products"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="reviews"
+                baseColumnNames="user_id"
+                referencedTableName="users"
+                referencedColumnNames="user_id"
+                constraintName="fk_reviews_users"
+                onDelete="CASCADE"/>
+
+        <sql><![CDATA[ALTER TABLE reviews ADD CONSTRAINT chk_rating CHECK (rating BETWEEN 1 AND 5)]]></sql>
+    </changeSet>
+
+    <!-- =====================  12. WISHLISTS  ===================== -->
+    <changeSet id="12-create-wishlists" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="wishlists"/>
+            </not>
+        </preConditions>
+        <createTable tableName="wishlists">
+            <column name="wishlist_id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="INT"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="wishlists"
+                baseColumnNames="user_id"
+                referencedTableName="users"
+                referencedColumnNames="user_id"
+                constraintName="fk_wishlists_users"
+                onDelete="CASCADE"/>
+    </changeSet>
+
+    <!-- =====================  13. WISHLIST ITEMS  ===================== -->
+    <changeSet id="13-create-wishlist-items" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="wishlist_items"/>
+            </not>
+        </preConditions>
+        <createTable tableName="wishlist_items">
+            <column name="wishlist_item_id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="wishlist_id" type="INT"/>
+            <column name="product_id" type="INT"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="wishlist_items"
+                baseColumnNames="wishlist_id"
+                referencedTableName="wishlists"
+                referencedColumnNames="wishlist_id"
+                constraintName="fk_wishlist_items_wishlists"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="wishlist_items"
+                baseColumnNames="product_id"
+                referencedTableName="products"
+                referencedColumnNames="product_id"
+                constraintName="fk_wishlist_items_products"/>
+
+        <addUniqueConstraint tableName="wishlist_items" columnNames="wishlist_id, product_id"/>
+    </changeSet>
+
+    <!-- =====================  14. COUPONS  ===================== -->
+    <changeSet id="14-create-coupons" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="coupons"/>
+            </not>
+        </preConditions>
+        <createTable tableName="coupons">
+            <column name="coupon_id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="code" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="discount_percent" type="NUMERIC(5,2)"/>
+            <column name="valid_from" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="valid_to" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true"/>
+        </createTable>
+
+        <sql>
+            <![CDATA[ALTER TABLE coupons ADD CONSTRAINT chk_discount CHECK (discount_percent >= 0 AND discount_percent <= 100)]]></sql>
+    </changeSet>
+
+    <!-- =====================  15. ORDER COUPONS  ===================== -->
+    <changeSet id="15-create-order-coupons" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="order_coupons"/>
+            </not>
+        </preConditions>
+        <createTable tableName="order_coupons">
+            <column name="order_coupon_id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="order_id" type="INT"/>
+            <column name="coupon_id" type="INT"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="order_coupons"
+                baseColumnNames="order_id"
+                referencedTableName="orders"
+                referencedColumnNames="order_id"
+                constraintName="fk_order_coupons_orders"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="order_coupons"
+                baseColumnNames="coupon_id"
+                referencedTableName="coupons"
+                referencedColumnNames="coupon_id"
+                constraintName="fk_order_coupons_coupons"/>
+
+        <addUniqueConstraint tableName="order_coupons" columnNames="order_id, coupon_id"/>
+    </changeSet>
+
+    <!-- =====================  16. INSERT SAMPLE DATA - USERS  ===================== -->
+    <changeSet id="16-insert-sample-users" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM users</sqlCheck>
+        </preConditions>
+        <insert tableName="users">
+            <column name="full_name" value="John Doe"/>
+            <column name="email" value="john@example.com"/>
+            <column name="password_hash" value="hashedpass123"/>
+            <column name="phone" value="1234567890"/>
+            <column name="role" value="customer"/>
+        </insert>
+        <insert tableName="users">
+            <column name="full_name" value="Jane Smith"/>
+            <column name="email" value="jane@example.com"/>
+            <column name="password_hash" value="hashedpass456"/>
+            <column name="phone" value="9876543210"/>
+            <column name="role" value="customer"/>
+        </insert>
+        <insert tableName="users">
+            <column name="full_name" value="Admin User"/>
+            <column name="email" value="admin@eshop.com"/>
+            <column name="password_hash" value="adminpass789"/>
+            <column name="phone" value="1112223333"/>
+            <column name="role" value="admin"/>
+        </insert>
+    </changeSet>
+
+    <!-- =====================  17. INSERT SAMPLE DATA - ADDRESSES  ===================== -->
+    <changeSet id="17-insert-sample-addresses" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM addresses</sqlCheck>
+        </preConditions>
+        <insert tableName="addresses">
+            <column name="user_id" value="1"/>
+            <column name="street" value="123 Main St"/>
+            <column name="city" value="New York"/>
+            <column name="state" value="NY"/>
+            <column name="postal_code" value="10001"/>
+            <column name="country" value="USA"/>
+            <column name="is_default" valueBoolean="true"/>
+        </insert>
+        <insert tableName="addresses">
+            <column name="user_id" value="2"/>
+            <column name="street" value="456 Park Ave"/>
+            <column name="city" value="Los Angeles"/>
+            <column name="state" value="CA"/>
+            <column name="postal_code" value="90001"/>
+            <column name="country" value="USA"/>
+            <column name="is_default" valueBoolean="true"/>
+        </insert>
+    </changeSet>
+
+    <!-- =====================  18. INSERT SAMPLE DATA - CATEGORIES  ===================== -->
+    <changeSet id="18-insert-sample-categories" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM categories</sqlCheck>
+        </preConditions>
+        <insert tableName="categories">
+            <column name="name" value="Electronics"/>
+            <column name="description" value="Electronic gadgets and devices"/>
+            <column name="parent_id" value="NULL"/>
+        </insert>
+        <insert tableName="categories">
+            <column name="name" value="Clothing"/>
+            <column name="description" value="Men and Women clothing"/>
+            <column name="parent_id" value="NULL"/>
+        </insert>
+        <insert tableName="categories">
+            <column name="name" value="Mobiles"/>
+            <column name="description" value="Smartphones and accessories"/>
+            <column name="parent_id" value="1"/>
+        </insert>
+        <insert tableName="categories">
+            <column name="name" value="Laptops"/>
+            <column name="description" value="All kinds of laptops"/>
+            <column name="parent_id" value="1"/>
+        </insert>
+    </changeSet>
+
+    <!-- =====================  19. INSERT SAMPLE DATA - PRODUCTS  ===================== -->
+    <changeSet id="19-insert-sample-products" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM products</sqlCheck>
+        </preConditions>
+        <insert tableName="products">
+            <column name="category_id" value="3"/>
+            <column name="name" value="iPhone 14"/>
+            <column name="description" value="Latest Apple iPhone 14"/>
+            <column name="price" value="999.99"/>
+            <column name="stock" value="50"/>
+        </insert>
+        <insert tableName="products">
+            <column name="category_id" value="3"/>
+            <column name="name" value="Samsung Galaxy S23"/>
+            <column name="description" value="Flagship Samsung smartphone"/>
+            <column name="price" value="899.99"/>
+            <column name="stock" value="30"/>
+        </insert>
+        <insert tableName="products">
+            <column name="category_id" value="4"/>
+            <column name="name" value="MacBook Pro 16&quot;"/>
+            <column name="description" value="Apple laptop with M2 chip"/>
+            <column name="price" value="2499.00"/>
+            <column name="stock" value="20"/>
+        </insert>
+        <insert tableName="products">
+            <column name="category_id" value="2"/>
+            <column name="name" value="Men T-Shirt"/>
+            <column name="description" value="Cotton round neck T-shirt"/>
+            <column name="price" value="19.99"/>
+            <column name="stock" value="200"/>
+        </insert>
+    </changeSet>
+
+    <!-- =====================  20. INSERT SAMPLE DATA - PRODUCT IMAGES  ===================== -->
+    <changeSet id="20-insert-sample-product-images" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM product_images</sqlCheck>
+        </preConditions>
+        <insert tableName="product_images">
+            <column name="product_id" value="1"/>
+            <column name="image_url" value="https://example.com/iphone14-main.jpg"/>
+            <column name="is_main" valueBoolean="true"/>
+        </insert>
+        <insert tableName="product_images">
+            <column name="product_id" value="1"/>
+            <column name="image_url" value="https://example.com/iphone14-side.jpg"/>
+            <column name="is_main" valueBoolean="false"/>
+        </insert>
+        <insert tableName="product_images">
+            <column name="product_id" value="2"/>
+            <column name="image_url" value="https://example.com/galaxy-s23.jpg"/>
+            <column name="is_main" valueBoolean="true"/>
+        </insert>
+        <insert tableName="product_images">
+            <column name="product_id" value="3"/>
+            <column name="image_url" value="https://example.com/macbook-pro.jpg"/>
+            <column name="is_main" valueBoolean="true"/>
+        </insert>
+        <insert tableName="product_images">
+            <column name="product_id" value="4"/>
+            <column name="image_url" value="https://example.com/tshirt.jpg"/>
+            <column name="is_main" valueBoolean="true"/>
+        </insert>
+    </changeSet>
+
+    <!-- =====================  21. INSERT SAMPLE DATA - CARTS  ===================== -->
+    <changeSet id="21-insert-sample-carts" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM carts</sqlCheck>
+        </preConditions>
+        <insert tableName="carts">
+            <column name="user_id" value="1"/>
+        </insert>
+        <insert tableName="carts">
+            <column name="user_id" value="2"/>
+        </insert>
+    </changeSet>
+
+    <!-- =====================  22. INSERT SAMPLE DATA - CART ITEMS  ===================== -->
+    <changeSet id="22-insert-sample-cart-items" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM cart_items</sqlCheck>
+        </preConditions>
+        <insert tableName="cart_items">
+            <column name="cart_id" value="1"/>
+            <column name="product_id" value="1"/>
+            <column name="quantity" value="1"/>
+        </insert>
+        <insert tableName="cart_items">
+            <column name="cart_id" value="2"/>
+            <column name="product_id" value="4"/>
+            <column name="quantity" value="2"/>
+        </insert>
+    </changeSet>
+
+    <!-- =====================  23. INSERT SAMPLE DATA - ORDERS  ===================== -->
+    <changeSet id="23-insert-sample-orders" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM orders</sqlCheck>
+        </preConditions>
+        <insert tableName="orders">
+            <column name="user_id" value="1"/>
+            <column name="address_id" value="1"/>
+            <column name="total_amount" value="999.99"/>
+            <column name="status" value="pending"/>
+        </insert>
+        <insert tableName="orders">
+            <column name="user_id" value="2"/>
+            <column name="address_id" value="2"/>
+            <column name="total_amount" value="39.98"/>
+            <column name="status" value="delivered"/>
+        </insert>
+    </changeSet>
+
+    <!-- =====================  24. INSERT SAMPLE DATA - ORDER ITEMS  ===================== -->
+    <changeSet id="24-insert-sample-order-items" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM order_items</sqlCheck>
+        </preConditions>
+        <insert tableName="order_items">
+            <column name="order_id" value="1"/>
+            <column name="product_id" value="1"/>
+            <column name="quantity" value="1"/>
+            <column name="price" value="999.99"/>
+        </insert>
+        <insert tableName="order_items">
+            <column name="order_id" value="2"/>
+            <column name="product_id" value="4"/>
+            <column name="quantity" value="2"/>
+            <column name="price" value="19.99"/>
+        </insert>
+    </changeSet>
+
+    <!-- =====================  25. INSERT SAMPLE DATA - PAYMENTS  ===================== -->
+    <changeSet id="25-insert-sample-payments" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM payments</sqlCheck>
+        </preConditions>
+        <insert tableName="payments">
+            <column name="order_id" value="1"/>
+            <column name="amount" value="999.99"/>
+            <column name="method" value="credit card"/>
+            <column name="status" value="pending"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="order_id" value="2"/>
+            <column name="amount" value="39.98"/>
+            <column name="method" value="paypal"/>
+            <column name="status" value="completed"/>
+        </insert>
+    </changeSet>
+
+    <!-- =====================  26. INSERT SAMPLE DATA - REVIEWS  ===================== -->
+    <changeSet id="26-insert-sample-reviews" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM reviews</sqlCheck>
+        </preConditions>
+        <insert tableName="reviews">
+            <column name="product_id" value="1"/>
+            <column name="user_id" value="1"/>
+            <column name="rating" value="5"/>
+            <column name="comment" value="Amazing phone, worth the price!"/>
+        </insert>
+        <insert tableName="reviews">
+            <column name="product_id" value="4"/>
+            <column name="user_id" value="2"/>
+            <column name="rating" value="4"/>
+            <column name="comment" value="Good quality T-shirt, comfortable."/>
+        </insert>
+    </changeSet>
+
+    <!-- =====================  27. INSERT SAMPLE DATA - WISHLISTS  ===================== -->
+    <changeSet id="27-insert-sample-wishlists" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM wishlists</sqlCheck>
+        </preConditions>
+        <insert tableName="wishlists">
+            <column name="user_id" value="1"/>
+        </insert>
+        <insert tableName="wishlists">
+            <column name="user_id" value="2"/>
+        </insert>
+    </changeSet>
+
+    <!-- =====================  28. INSERT SAMPLE DATA - WISHLIST ITEMS  ===================== -->
+    <changeSet id="28-insert-sample-wishlist-items" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM wishlist_items</sqlCheck>
+        </preConditions>
+        <insert tableName="wishlist_items">
+            <column name="wishlist_id" value="1"/>
+            <column name="product_id" value="3"/>
+        </insert>
+        <insert tableName="wishlist_items">
+            <column name="wishlist_id" value="2"/>
+            <column name="product_id" value="2"/>
+        </insert>
+    </changeSet>
+
+    <!-- =====================  29. INSERT SAMPLE DATA - COUPONS  ===================== -->
+    <changeSet id="29-insert-sample-coupons" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM coupons</sqlCheck>
+        </preConditions>
+        <insert tableName="coupons">
+            <column name="code" value="NEWYEAR2025"/>
+            <column name="discount_percent" value="10"/>
+            <column name="valid_from" value="2025-01-01"/>
+            <column name="valid_to" value="2025-01-31"/>
+            <column name="is_active" valueBoolean="true"/>
+        </insert>
+        <insert tableName="coupons">
+            <column name="code" value="FREESHIP"/>
+            <column name="discount_percent" value="100"/>
+            <column name="valid_from" value="2025-02-01"/>
+            <column name="valid_to" value="2025-12-31"/>
+            <column name="is_active" valueBoolean="true"/>
+        </insert>
+    </changeSet>
+
+    <!-- =====================  30. INSERT SAMPLE DATA - ORDER COUPONS  ===================== -->
+    <changeSet id="30-insert-sample-order-coupons" author="abdulrhman">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM order_coupons</sqlCheck>
+        </preConditions>
+        <insert tableName="order_coupons">
+            <column name="order_id" value="1"/>
+            <column name="coupon_id" value="1"/>
+        </insert>
+    </changeSet>
+
+
+</databaseChangeLog>

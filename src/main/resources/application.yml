@@ -12,3 +12,7 @@ spring:
     hibernate:
       ddl-auto: none
     show-sql: true
+
+  liquibase:
+    change-log: classpath:db/changelog/master.changelog.xml
+    enabled: true
